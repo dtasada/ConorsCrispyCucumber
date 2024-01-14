@@ -15,7 +15,7 @@
 #include <set>
 
 #define GAME_TITLE "game lmao"
-#define DEF_FPS 60
+#define DEFAULT_FRAMETIME (1000.0 / 60.0)
 
 struct Display {
 	SDL_Window* window;
@@ -62,13 +62,13 @@ struct Sprite {
 		SDL_RenderCopy(display.renderer, texture, NULL, &rectangle);
 	}
 
-	virtual void process_input(SDL_Event* event) {};
+	virtual void process_input() {};
 };
 
 struct Game {
 	bool running = true;
-	int fps = 60;
-	int last_frame_time;
+	unsigned int last_frame_time;
+	unsigned int fps;
 	float delta_time;
 
 	std::vector<Sprite*> update_objects;
@@ -88,15 +88,19 @@ struct Game {
 			break;
 		}
 		for (Sprite* object: this->update_objects) {
-			object->process_input(&event);
+			object->process_input();
 		}
 	}
 
 	void update() {
 		SDL_RenderClear(display.renderer);
+		SDL_Delay(1000.0 / 800);
+
 		int frametime = SDL_GetTicks() - last_frame_time;
+		fps = 1000.0 / frametime;
+	
 		last_frame_time = SDL_GetTicks();
-		delta_time = frametime / (1000.0 / DEF_FPS);
+		delta_time = frametime / DEFAULT_FRAMETIME;
 
 		for (Sprite* object: update_objects) {
 			object->update();
@@ -109,18 +113,17 @@ struct Game {
 extern Game game;
 
 struct Player : Sprite {
-	int x_vel = 30;
-	int y_vel = 30;
+	int x_vel = 10;
+	int y_vel = 10;
 	Player() : Sprite(50, 50, 210, 351, "./assets/keanu.jpg") {};
 
 	void update() override {
 		Sprite::update();
-		this->x += 4 * game.delta_time;
 		this->rectangle.x = this->x;
 		this->rectangle.y = this->y;
 	}
 
-	void process_input(SDL_Event* event) override {
+	void process_input() override {
 		if (game.keys.count(SDLK_w))
 			this->y -= this->y_vel * game.delta_time;
 		if (game.keys.count(SDLK_s))
@@ -133,3 +136,26 @@ struct Player : Sprite {
 };
 extern Player player;
 
+struct Grass : Sprite {
+	int x_vel = 5;
+	int y_vel = 5;
+	Grass() : Sprite(300, 300, 210, 118, "./assets/josh.jpg") {};
+
+	void update() override {
+		Sprite::update();
+		this->rectangle.x = this->x;
+		this->rectangle.y = this->y;
+	}
+
+	void process_input() override {
+		if (game.keys.count(SDLK_w))
+			this->y -= this->y_vel * game.delta_time;
+		if (game.keys.count(SDLK_s))
+			this->y += this->y_vel * game.delta_time;
+		if (game.keys.count(SDLK_d))
+			this->x += this->x_vel * game.delta_time;
+		if (game.keys.count(SDLK_a))
+			this->x -= this->x_vel * game.delta_time;
+	}
+};
+extern Grass grass;

@@ -9,9 +9,10 @@
 Game game;
 Display display;
 Player player;
+Grass grass;
 
 int main(int argc, char* argv[]) {
-	game.update_objects = { &player };
+	game.update_objects = { &player, &grass };
 
 	while (game.running) {
 		game.process_input();
