@@ -1,4 +1,7 @@
 #include <SDL2/SDL_error.h>
+#include <SDL2/SDL_events.h>
+#include <SDL2/SDL_keyboard.h>
+#include <SDL2/SDL_keycode.h>
 #include <SDL2/SDL_rect.h>
 #include <SDL2/SDL_render.h>
 #include <SDL2/SDL_surface.h>
@@ -9,8 +12,10 @@
 #include <cstdio>
 #include <sys/types.h>
 #include <vector>
+#include <set>
 
 #define GAME_TITLE "game lmao"
+#define DEF_FPS 60
 
 struct Display {
 	SDL_Window* window;
@@ -35,50 +40,63 @@ extern Display display;
 
 struct Sprite {
 	int x, y;
+	int w, h;
 	SDL_Surface* surface;
 	SDL_Texture* texture;
 	SDL_Rect rectangle;
 
-	Sprite(int x_arg, int y_arg, int width, int height, const char* path) {
+	Sprite(int x_arg, int y_arg, int w_arg, int h_arg, const char* path) {
 		x = x_arg;
 		y = y_arg;
+		w = w_arg;
+		h = h_arg;
 		surface = IMG_Load(path);
 		if (!surface) fprintf(stderr, SDL_GetError());
 		texture = SDL_CreateTextureFromSurface(display.renderer, surface);
 		if (!texture) fprintf(stderr, SDL_GetError());
-		rectangle = SDL_Rect{ x_arg, y_arg, width, height };
+		rectangle = SDL_Rect{x_arg, y_arg, w_arg, h};
 
 	}
 
 	virtual void update() {
 		SDL_RenderCopy(display.renderer, texture, NULL, &rectangle);
 	}
-};
 
-struct Player : Sprite {
-	Player() : Sprite(display.width / 2, display.height / 2, 50, 50, "./assets/keanu.jpg") {};
+	virtual void process_input(SDL_Event* event) {};
 };
-extern Player player;
-
-extern std::vector<Sprite*> update_objects = { &player };
 
 struct Game {
 	bool running = true;
+	int fps = 60;
+	int last_frame_time;
+	float delta_time;
+
+	std::vector<Sprite*> update_objects;
+	std::set<SDL_Keycode> keys;
+
 	void process_input() {
 		SDL_Event event;
 		SDL_PollEvent(&event);
 
+		keys.clear();
 		switch (event.type) {
 			case SDL_QUIT:
 				running = false;
 			break;
 			case SDL_KEYDOWN:
+				keys.insert(event.key.keysym.sym);
 			break;
+		}
+		for (Sprite* object: this->update_objects) {
+			object->process_input(&event);
 		}
 	}
 
 	void update() {
 		SDL_RenderClear(display.renderer);
+		int frametime = SDL_GetTicks() - last_frame_time;
+		last_frame_time = SDL_GetTicks();
+		delta_time = frametime / (1000.0 / DEF_FPS);
 
 		for (Sprite* object: update_objects) {
 			object->update();
@@ -86,10 +104,32 @@ struct Game {
 
 		SDL_SetRenderDrawColor(display.renderer, 0, 0 ,0, 255);
 		SDL_RenderPresent(display.renderer);
-
-		for (Sprite* object: update_objects) {
-			SDL_DestroyTexture(object->texture);
-		}
 	}
 };
 extern Game game;
+
+struct Player : Sprite {
+	int x_vel = 30;
+	int y_vel = 30;
+	Player() : Sprite(50, 50, 210, 351, "./assets/keanu.jpg") {};
+
+	void update() override {
+		Sprite::update();
+		this->x += 4 * game.delta_time;
+		this->rectangle.x = this->x;
+		this->rectangle.y = this->y;
+	}
+
+	void process_input(SDL_Event* event) override {
+		if (game.keys.count(SDLK_w))
+			this->y -= this->y_vel * game.delta_time;
+		if (game.keys.count(SDLK_s))
+			this->y += this->y_vel * game.delta_time;
+		if (game.keys.count(SDLK_d))
+			this->x += this->x_vel * game.delta_time;
+		if (game.keys.count(SDLK_a))
+			this->x -= this->x_vel * game.delta_time;
+	}
+};
+extern Player player;
+
