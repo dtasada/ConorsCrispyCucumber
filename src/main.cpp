@@ -3,8 +3,8 @@
 #include <SDL2/SDL_render.h>
 #include <SDL2/SDL_video.h>
 #include <SDL2/SDL.h>
-
-#include "./settings.hpp"
+#include <SDL2/SDL_ttf.h>
+#include "settings.hpp"
 
 Game game;
 Display display;
@@ -13,6 +13,7 @@ Platform platform = Platform(0, display.height - 50, display.width, 50, "./asset
 
 int main(int argc, char* argv[]) {
 	game.update_objects = {&player, &platform};
+	game.platforms = {&platform};
 
 	while (game.running) {
 		game.process_input();
