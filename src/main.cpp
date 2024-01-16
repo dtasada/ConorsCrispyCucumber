@@ -1,9 +1,11 @@
 #include <SDL2/SDL_error.h>
 #include <SDL2/SDL_rect.h>
 #include <SDL2/SDL_render.h>
+#include <SDL2/SDL_surface.h>
 #include <SDL2/SDL_video.h>
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_ttf.h>
+
 #include "settings.hpp"
 
 Game game;
@@ -23,8 +25,10 @@ int main(int argc, char* argv[]) {
 		game.update();
 	}
 
-	for (Sprite* object: game.update_objects)
+	for (Sprite* object: game.update_objects) {
 		SDL_DestroyTexture(object->texture);
+		SDL_FreeSurface(object->surface);
+	}
 
 	SDL_Quit();
 	SDL_DestroyWindow(display.window);

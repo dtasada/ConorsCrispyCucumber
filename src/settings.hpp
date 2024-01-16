@@ -2,10 +2,12 @@
 #include <SDL2/SDL_events.h>
 #include <SDL2/SDL_keyboard.h>
 #include <SDL2/SDL_keycode.h>
+#include <SDL2/SDL_pixels.h>
 #include <SDL2/SDL_rect.h>
 #include <SDL2/SDL_render.h>
 #include <SDL2/SDL_surface.h>
 #include <SDL2/SDL_timer.h>
+#include <SDL2/SDL_ttf.h>
 #include <SDL2/SDL_video.h>
 #include <SDL2/SDL_image.h>
 #include <SDL2/SDL.h>
@@ -17,6 +19,10 @@
 
 #define GAME_TITLE "game lmao"
 #define DEFAULT_FRAMETIME (1000.0 / 60.0)
+#define LILITA TTF_OpenFont("./assets/ttf/lilita.ttf", 12)
+
+const SDL_Color WHITE = {255, 255, 255, 255};
+const SDL_Color BLACK = {0, 0, 0, 255};
 
 struct Display {
 	SDL_Window* window;
@@ -47,26 +53,30 @@ struct Sprite {
 	SDL_Texture* texture;
 	SDL_Rect rect;
 
-	Sprite(int x_arg, int y_arg, int w_arg, int h_arg, const char* path_arg, const Uint32 rgba_arg[4]) {
-		x = x_arg;
-		y = y_arg;
-		w = w_arg;
-		h = h_arg;
+	Sprite(int x, int y, int w, int h, const char* path_arg, const Uint32 rgba[4]) {
+		this->x = x;
+		this->y = y;
+		this->w = w;
+		this->h = h;
 		if (path_arg) {
 			const char* path = path_arg;
 			surface = IMG_Load(path);
-		} else if (rgba_arg) {
-			surface = SDL_CreateRGBSurface(0, w_arg, h_arg, 32, rgba_arg[0], rgba_arg[1], rgba_arg[2], rgba_arg[3]);
+		} else if (rgba) {
+			surface = SDL_CreateRGBSurface(0, w, h, 4, rgba[0], rgba[1], rgba[2], rgba[3]);
 		} else {
 			throw "Sprite passed not path or rgba value!";
 		}
 
 		if (!surface) {
 			fprintf(stderr, "SDL error: %s\n", SDL_GetError());
+			exit(-1);
 		}
+
 		texture = SDL_CreateTextureFromSurface(display.renderer, surface);
-		if (!texture)
+		if (!texture) {
 			fprintf(stderr, "SDL error: %s\n", SDL_GetError());
+			exit(-1);
+		}
 		rect = SDL_Rect{x, y, w, h};
 
 	}
@@ -146,19 +156,20 @@ struct Player : Sprite {
 	float x_vel = 10;
 	float y_vel = 0;
 	float y_acc = 0.06;
-	Player(const char* path) : Sprite(0, 0, 50, 50, path, NULL) {};
+	Player(const char* path) : Sprite(0, 0, 150, 210, path, NULL) {};
 
 	void collide() {
 		// move y
 		this->y_vel += 0.5 * this->y_acc * game.delta_time;
 		this->y += this->y_vel * game.delta_time;
 		this->y_vel += 0.5 * this->y_acc * game.delta_time;
+
 		// update
 		this->update_rect();
+
 		// collide y
 		for (Platform* platform: game.platforms) {
-			// printf("%f   %f\n", this->frect.y, platform->frect.y);
- 			bool col = SDL_HasIntersection(&this->rect, &platform->rect);
+			bool col = SDL_HasIntersection(&this->rect, &platform->rect);
 			if (col) {
 				this->y = platform->rect.y - this->rect.h;
 				this->y_vel = -5;
@@ -183,14 +194,20 @@ struct Player : Sprite {
 };
 
 struct Button : Sprite {
-	std::string body; 
+	std::string body_text; 
+	SDL_Surface* body_surface;
+	SDL_Texture* body_texture;
+	SDL_Rect body_rect;
 
 	Button(int x, int y, int w, int h, std::string body, Uint32 rgba[4]) : Sprite(x, y, w, h, NULL, rgba) {
-		this->body = body;
+		body_text = body;
+		body_surface = TTF_RenderText_Solid(LILITA, body.c_str(), BLACK);
+		body_texture = SDL_CreateTextureFromSurface(display.renderer, body_surface);
 	}
 
 	void update() override {
 		SDL_RenderCopy(display.renderer, texture, NULL, &this->rect);
+		SDL_RenderCopy(display.renderer, body_texture, NULL, &this->rect);
 	}
 };
 extern Button button;
