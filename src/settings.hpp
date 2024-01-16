@@ -24,7 +24,7 @@ struct Display {
 	unsigned int height = 720;
 
 	Display() {
-		this->window = SDL_CreateWindow(GAME_TITLE, SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, this->width, this->height, SDL_WINDOW_BORDERLESS);
+		this->window = SDL_CreateWindow(GAME_TITLE, SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, this->width, this->height, NULL);
 		if (!this->window)
 			fprintf(stderr, "Error creating SDL_Window%s\n", SDL_GetError());
 

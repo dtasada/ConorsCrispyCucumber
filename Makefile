@@ -1,8 +1,8 @@
 build:
-	g++ ./src/*.cpp -o asdf -lSDL2 -lSDL2_image -Wall
+	g++ ./src/*.cpp -o ./HageveldSmashBros -std=c++23 -lSDL2 -lSDL2_image -Wall
 
 run: build
-	./asdf
+	./HageveldSmashBros
 
 clean:
-	rm asdf
+	rm HageveldSmashBros
