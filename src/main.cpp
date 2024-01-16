@@ -11,8 +11,11 @@ Display display;
 Player player = Player("./assets/keanu.jpg");
 Platform platform = Platform(0, display.height - 50, display.width, 50, "./assets/josh.jpg");
 
+Uint32 arg[] = {255, 255 ,255, 255};
+Button button = Button(50, 50, 100, 100, "ASD", arg);
+
 int main(int argc, char* argv[]) {
-	game.update_objects = {&player, &platform};
+	game.update_objects = {&player, &platform, &button};
 
 	while (game.running) {
 		game.process_input();

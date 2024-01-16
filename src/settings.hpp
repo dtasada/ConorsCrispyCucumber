@@ -10,6 +10,7 @@
 #include <SDL2/SDL_image.h>
 #include <SDL2/SDL.h>
 #include <cstdio>
+#include <string>
 #include <sys/types.h>
 #include <vector>
 #include <set>
@@ -46,20 +47,28 @@ struct Sprite {
 	SDL_Texture* texture;
 	SDL_Rect rectangle;
 
-	Sprite(int x_arg, int y_arg, int w_arg, int h_arg, const char* path_arg) {
+	Sprite(int x_arg, int y_arg, int w_arg, int h_arg, const char* path_arg, const Uint32 rgba_arg[4]) {
 		x = x_arg;
 		y = y_arg;
 		w = w_arg;
 		h = h_arg;
-		const char* path = path_arg;
-		surface = IMG_Load(path);
-		if (!surface){
+		if (path_arg) {
+			const char* path = path_arg;
+			surface = IMG_Load(path);
+		} else if (rgba_arg) {
+			surface = SDL_CreateRGBSurface(0, w_arg, h_arg, 32, rgba_arg[0], rgba_arg[1], rgba_arg[2], rgba_arg[3]);
+		} else {
+			throw "Sprite passed not path or rgba value!";
+		}
+
+		if (!surface) {
 			fprintf(stderr, "SDL error: %s\n", SDL_GetError());
 		}
 		texture = SDL_CreateTextureFromSurface(display.renderer, surface);
-		if (!texture)
+		if (!texture) {
 			fprintf(stderr, "SDL error: %s\n", SDL_GetError());
-		rectangle = SDL_Rect{x_arg, y_arg, w_arg, h};
+		}
+		rectangle = SDL_Rect{x, y, w, h};
 
 	}
 
@@ -124,7 +133,7 @@ struct Player : Sprite {
 	float x_vel = 10;
 	float y_vel = 0;
 	float y_acc = 0.06;
-	Player(const char* path) : Sprite(0, 0, 50, 50, path) {};
+	Player(const char* path) : Sprite(0, 0, 50, 50, path, NULL) {};
 
 	void update() override {
 		// movement
@@ -145,9 +154,22 @@ struct Player : Sprite {
 };
 
 struct Platform : Sprite {
-	Platform(int x, int y, int w, int h, const char* path) : Sprite(x, y, w, h, path) {};
+	Platform(int x, int y, int w, int h, const char* path) : Sprite(x, y, w, h, path, NULL) {};
 	
 	void update() override {
 		Sprite::update();
 	}
 };
+
+struct Button : Sprite {
+	std::string body; 
+
+	Button(int x, int y, int w, int h, std::string body, Uint32 rgba[4]) : Sprite(x, y, w, h, NULL, rgba) {
+		this->body = body;
+	}
+
+	void update() override {
+		SDL_RenderCopy(display.renderer, texture, NULL, &rectangle);
+	}
+};
+extern Button button;
