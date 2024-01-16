@@ -59,10 +59,12 @@ struct Sprite {
 	}
 
 	virtual void update() {
+		this->rectangle.x = this->x;
+		this->rectangle.y = this->y;
 		SDL_RenderCopy(display.renderer, texture, NULL, &rectangle);
 	}
 
-	virtual void process_input() {};
+	void process_input(SDL_Event* event) {}
 };
 
 struct Game {
@@ -78,7 +80,6 @@ struct Game {
 		SDL_Event event;
 		SDL_PollEvent(&event);
 
-		keys.clear();
 		switch (event.type) {
 			case SDL_QUIT:
 				running = false;
@@ -86,15 +87,17 @@ struct Game {
 			case SDL_KEYDOWN:
 				keys.insert(event.key.keysym.sym);
 			break;
+			case SDL_KEYUP:
+				keys.erase(event.key.keysym.sym);
 		}
 		for (Sprite* object: this->update_objects) {
-			object->process_input();
+			object->process_input(&event);
 		}
 	}
 
 	void update() {
 		SDL_RenderClear(display.renderer);
-		SDL_Delay(1000.0 / 800);
+		SDL_Delay(1000.0 / 240);
 
 		int frametime = SDL_GetTicks() - last_frame_time;
 		fps = 1000.0 / frametime;
@@ -113,49 +116,37 @@ struct Game {
 extern Game game;
 
 struct Player : Sprite {
-	int x_vel = 10;
-	int y_vel = 10;
-	Player() : Sprite(50, 50, 210, 351, "./assets/keanu.jpg") {};
+	float x_vel = 10;
+	float y_vel = 0;
+	float y_acc = 0.06;
+	Player() : Sprite(0, 0, 50, 50, "./assets/keanu.jpg") {};
 
 	void update() override {
-		Sprite::update();
-		this->rectangle.x = this->x;
-		this->rectangle.y = this->y;
-	}
-
-	void process_input() override {
-		if (game.keys.count(SDLK_w))
-			this->y -= this->y_vel * game.delta_time;
+		// movement
+		this->y_vel += 0.5 * this->y_acc * game.delta_time;
+		this->y += this->y_vel * game.delta_time;
+		this->y_vel += 0.5 * this->y_acc * game.delta_time;
+		// keys
 		if (game.keys.count(SDLK_s))
 			this->y += this->y_vel * game.delta_time;
 		if (game.keys.count(SDLK_d))
 			this->x += this->x_vel * game.delta_time;
 		if (game.keys.count(SDLK_a))
 			this->x -= this->x_vel * game.delta_time;
+		Sprite::update();
+	}
+
+	void process_input(SDL_Event* event) {}
+};
+
+struct Platform : Sprite {
+	Platform(int x, int y, int w, int h) : Sprite(x, y, w, h, "./assets/josh.jpg") {}
+	
+	void update() override {
+		printf("%d\n", this->rectangle.x);
+		Sprite::update();
 	}
 };
+
+extern Platform platform = Platform(20, 20, 50, 50);
 extern Player player;
-
-struct Grass : Sprite {
-	int x_vel = 5;
-	int y_vel = 5;
-	Grass() : Sprite(300, 300, 210, 118, "./assets/josh.jpg") {};
-
-	void update() override {
-		Sprite::update();
-		this->rectangle.x = this->x;
-		this->rectangle.y = this->y;
-	}
-
-	void process_input() override {
-		if (game.keys.count(SDLK_w))
-			this->y -= this->y_vel * game.delta_time;
-		if (game.keys.count(SDLK_s))
-			this->y += this->y_vel * game.delta_time;
-		if (game.keys.count(SDLK_d))
-			this->x += this->x_vel * game.delta_time;
-		if (game.keys.count(SDLK_a))
-			this->x -= this->x_vel * game.delta_time;
-	}
-};
-extern Grass grass;
