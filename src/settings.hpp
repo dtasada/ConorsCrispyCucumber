@@ -124,8 +124,7 @@ struct Player : Sprite {
 	float x_vel = 10;
 	float y_vel = 0;
 	float y_acc = 0.06;
-	Player() : Sprite(0, 0, 50, 50, "./assets/josh.jpg") {
-	};
+	Player(const char* path) : Sprite(0, 0, 50, 50, path) {};
 
 	void update() override {
 		// movement
@@ -152,5 +151,3 @@ struct Platform : Sprite {
 		Sprite::update();
 	}
 };
-
-extern Player player;

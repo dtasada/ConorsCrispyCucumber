@@ -8,7 +8,7 @@
 
 Game game;
 Display display;
-Player player;
+Player player = Player("./assets/josh.jpg");
 
 int main(int argc, char* argv[]) {
 	game.update_objects = {&player};
