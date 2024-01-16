@@ -3,8 +3,8 @@
 #include <SDL2/SDL_render.h>
 #include <SDL2/SDL_video.h>
 #include <SDL2/SDL.h>
-
-#include "./settings.hpp"
+#include <SDL2/SDL_ttf.h>
+#include "settings.hpp"
 
 Game game;
 Display display;
@@ -16,6 +16,7 @@ Button button = Button(50, 50, 100, 100, "ASD", arg);
 
 int main(int argc, char* argv[]) {
 	game.update_objects = {&player, &platform, &button};
+	game.platforms = {&platform};
 
 	while (game.running) {
 		game.process_input();
