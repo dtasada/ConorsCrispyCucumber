@@ -8,10 +8,11 @@
 
 Game game;
 Display display;
-Player player = Player("./assets/josh.jpg");
+Player player = Player("./assets/keanu.jpg");
+Platform platform = Platform(0, display.height - 50, display.width, 50, "./assets/josh.jpg");
 
 int main(int argc, char* argv[]) {
-	game.update_objects = {&player};
+	game.update_objects = {&player, &platform};
 
 	while (game.running) {
 		game.process_input();
