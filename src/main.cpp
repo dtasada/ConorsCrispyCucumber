@@ -11,7 +11,7 @@ Display display;
 Player player;
 
 int main(int argc, char* argv[]) {
-	game.update_objects = {&player, &platform};
+	game.update_objects = {&player};
 
 	while (game.running) {
 		game.process_input();

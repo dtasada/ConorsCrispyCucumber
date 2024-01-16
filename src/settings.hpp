@@ -24,7 +24,7 @@ struct Display {
 	unsigned int height = 720;
 
 	Display() {
-		this->window = SDL_CreateWindow(GAME_TITLE, SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, this->width, this->height, NULL);
+		this->window = SDL_CreateWindow(GAME_TITLE, SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, this->width, this->height, (Uint32)NULL);
 		if (!this->window)
 			fprintf(stderr, "Error creating SDL_Window%s\n", SDL_GetError());
 
@@ -38,6 +38,7 @@ struct Display {
 };
 extern Display display;
 
+
 struct Sprite {
 	int x, y;
 	int w, h;
@@ -45,15 +46,19 @@ struct Sprite {
 	SDL_Texture* texture;
 	SDL_Rect rectangle;
 
-	Sprite(int x_arg, int y_arg, int w_arg, int h_arg, const char* path) {
+	Sprite(int x_arg, int y_arg, int w_arg, int h_arg, const char* path_arg) {
 		x = x_arg;
 		y = y_arg;
 		w = w_arg;
 		h = h_arg;
+		const char* path = path_arg;
 		surface = IMG_Load(path);
-		if (!surface) fprintf(stderr, SDL_GetError());
+		if (!surface){
+			fprintf(stderr, "SDL error: %s\n", SDL_GetError());
+		}
 		texture = SDL_CreateTextureFromSurface(display.renderer, surface);
-		if (!texture) fprintf(stderr, SDL_GetError());
+		if (!texture)
+			fprintf(stderr, "SDL error: %s\n", SDL_GetError());
 		rectangle = SDL_Rect{x_arg, y_arg, w_arg, h};
 
 	}
@@ -109,7 +114,7 @@ struct Game {
 			object->update();
 		}
 
-		SDL_SetRenderDrawColor(display.renderer, 0, 0 ,0, 255);
+		SDL_SetRenderDrawColor(display.renderer, 120, 120, 120, 255);
 		SDL_RenderPresent(display.renderer);
 	}
 };
@@ -119,7 +124,8 @@ struct Player : Sprite {
 	float x_vel = 10;
 	float y_vel = 0;
 	float y_acc = 0.06;
-	Player() : Sprite(0, 0, 50, 50, "./assets/keanu.jpg") {};
+	Player() : Sprite(0, 0, 50, 50, "./assets/josh.jpg") {
+	};
 
 	void update() override {
 		// movement
@@ -140,13 +146,11 @@ struct Player : Sprite {
 };
 
 struct Platform : Sprite {
-	Platform(int x, int y, int w, int h) : Sprite(x, y, w, h, "./assets/josh.jpg") {}
+	Platform(int x, int y, int w, int h, const char* path) : Sprite(x, y, w, h, path) {};
 	
 	void update() override {
-		printf("%d\n", this->rectangle.x);
 		Sprite::update();
 	}
 };
 
-extern Platform platform = Platform(20, 20, 50, 50);
 extern Player player;
