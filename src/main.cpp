@@ -11,22 +11,23 @@
 
 Game game;
 Display display;
-Player player = Player("./assets/conor_standing.png");
-Sprite cucumber = Sprite(0, 0, 200, 60, "./assets/cucumber.png", 0);
-Platform platform =
-    Platform(0, display.height - 50, display.width, 50, "./assets/josh.jpg");
-
-Button button = Button(50, 50, 100, 100, "ASD", (Uint32[]){255, 255, 255, 255});
+Player conor = Player("./assets/img/conor_standing.png");
+Enemy jochem = Enemy("./assets/img/jochem_standing.png");
+Sprite cucumber = Sprite(0, 0, 200, 60, "./assets/img/cucumber.png", 0);
+Platform platform = Platform(0, display.height - 50, display.width, 50, "./assets/img/josh.jpg");
+Button button = Button(50, 50, 100, 100, "ASD", (Uint32[]){255, 255, 255, 255}, [] { return 0; });
 
 int main(int argc, char *argv[]) {
-    game.update_objects = {&player, &platform, &button, &cucumber};
+    game.update_objects = {&conor, &jochem, &platform, &button, &cucumber};
     game.platforms = {&platform};
 
     while (game.running) {
         game.process_input();
+
+        cucumber.rect.x = conor.rect.x + 170;
+        cucumber.rect.y = conor.rect.y + 185;
+
         game.update();
-        cucumber.rect.x = player.rect.x + 170;
-        cucumber.rect.y = player.rect.y + 185;
     }
 
     for (Sprite *object : game.update_objects) {

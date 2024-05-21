@@ -11,7 +11,9 @@
 #include <SDL2/SDL_timer.h>
 #include <SDL2/SDL_ttf.h>
 #include <SDL2/SDL_video.h>
+#include <any>
 #include <cstdio>
+#include <functional>
 #include <set>
 #include <string>
 #include <sys/types.h>
@@ -31,14 +33,12 @@ struct Display {
     unsigned int height = 720;
 
     Display() {
-        this->window = SDL_CreateWindow(GAME_TITLE, SDL_WINDOWPOS_UNDEFINED,
-                                        SDL_WINDOWPOS_UNDEFINED, this->width,
+        this->window = SDL_CreateWindow(GAME_TITLE, SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, this->width,
                                         this->height, (Uint32)NULL);
         if (!this->window)
             fprintf(stderr, "Error creating SDL_Window%s\n", SDL_GetError());
 
-        this->renderer =
-            SDL_CreateRenderer(this->window, -1, SDL_RENDERER_ACCELERATED);
+        this->renderer = SDL_CreateRenderer(this->window, -1, SDL_RENDERER_ACCELERATED);
         if (!this->renderer)
             fprintf(stderr, "Error creating SDL_Renderer%s\n", SDL_GetError());
 
@@ -53,14 +53,12 @@ struct Sprite {
     SDL_Texture *texture;
     SDL_Rect rect;
 
-    Sprite(int x, int y, int w, int h, const char *path_arg,
-           const Uint32 rgba[4]) {
+    Sprite(int x, int y, int w, int h, const char *path_arg, const Uint32 rgba[4]) {
         if (path_arg) {
             const char *path = path_arg;
             surface = IMG_Load(path);
         } else if (rgba) {
-            surface = SDL_CreateRGBSurface(0, w, h, 4, rgba[0], rgba[1],
-                                           rgba[2], rgba[3]);
+            surface = SDL_CreateRGBSurface(0, w, h, 4, rgba[0], rgba[1], rgba[2], rgba[3]);
         } else {
             throw "Sprite passed not path or rgba value!";
         }
@@ -78,21 +76,24 @@ struct Sprite {
         rect = SDL_Rect{x, y, w, h};
     }
 
-    void update_rect() { NULL; }
+    void update_rect() {
+    }
 
     virtual void update() {
         this->update_rect();
         SDL_RenderCopy(display.renderer, texture, NULL, &rect);
     }
 
-    void process_input(SDL_Event *event) {}
+    void process_input(SDL_Event *event) {
+    }
 };
 
 struct Platform : Sprite {
-    Platform(int x, int y, int w, int h, const char *path)
-        : Sprite(x, y, w, h, path, NULL){};
+    Platform(int x, int y, int w, int h, const char *path) : Sprite(x, y, w, h, path, NULL){};
 
-    void update() override { Sprite::update(); }
+    void update() override {
+        Sprite::update();
+    }
 };
 
 struct Game {
@@ -167,8 +168,7 @@ struct Player : Sprite {
 
         // collide y
         for (Platform *platform : game.platforms) {
-            bool col = SDL_HasIntersection(&this->rect, &platform->rect);
-            if (col) {
+            if (SDL_HasIntersection(&this->rect, &platform->rect)) {
                 this->rect.y = platform->rect.y - this->rect.h;
                 this->y_vel = -5;
             }
@@ -188,7 +188,48 @@ struct Player : Sprite {
         Sprite::update();
     }
 
-    void process_input(SDL_Event *event) {}
+    void process_input(SDL_Event *event) {
+    }
+};
+
+struct Enemy : Sprite {
+    float x_vel;
+    float y_vel;
+    float y_acc;
+
+    Enemy(const char *path) : Sprite(0, 0, 200, 400, path, NULL) {
+        this->x_vel = 10.0f;
+        this->y_vel = 0.0f;
+        this->y_acc = 0.06f;
+    };
+
+    void collide() {
+        // move y
+        this->y_vel += 0.5 * this->y_acc * game.delta_time;
+        this->rect.y += this->y_vel * game.delta_time;
+        this->y_vel += 0.5 * this->y_acc * game.delta_time;
+
+        // update
+        this->update_rect();
+
+        // collide y
+        for (Platform *platform : game.platforms) {
+            if (SDL_HasIntersection(&this->rect, &platform->rect)) {
+                this->rect.y = platform->rect.y - this->rect.h;
+                this->y_vel = -5;
+            }
+        }
+        // update
+        this->update_rect();
+    }
+
+    void update() override {
+        this->collide();
+        Sprite::update();
+    }
+
+    void process_input(SDL_Event *event) {
+    }
 };
 
 struct Button : Sprite {
@@ -196,13 +237,13 @@ struct Button : Sprite {
     SDL_Surface *body_surface;
     SDL_Texture *body_texture;
     SDL_Rect body_rect;
+    std::function<void(std::any)> onclick;
 
-    Button(int x, int y, int w, int h, std::string body, Uint32 rgba[4])
+    Button(int x, int y, int w, int h, std::string body, Uint32 rgba[4], std::function<void()> onclick)
         : Sprite(x, y, w, h, NULL, rgba) {
         body_text = body;
         body_surface = TTF_RenderText_Solid(LILITA, body.c_str(), BLACK);
-        body_texture =
-            SDL_CreateTextureFromSurface(display.renderer, body_surface);
+        body_texture = SDL_CreateTextureFromSurface(display.renderer, body_surface);
     }
 
     void update() override {
