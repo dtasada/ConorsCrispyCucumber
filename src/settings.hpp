@@ -1,9 +1,11 @@
 #include <SDL2/SDL.h>
+#include <SDL2/SDL_audio.h>
 #include <SDL2/SDL_error.h>
 #include <SDL2/SDL_events.h>
 #include <SDL2/SDL_image.h>
 #include <SDL2/SDL_keyboard.h>
 #include <SDL2/SDL_keycode.h>
+#include <SDL2/SDL_mixer.h>
 #include <SDL2/SDL_pixels.h>
 #include <SDL2/SDL_rect.h>
 #include <SDL2/SDL_render.h>
@@ -14,17 +16,22 @@
 #include <any>
 #include <cstdio>
 #include <functional>
+#include <map>
 #include <set>
 #include <string>
 #include <sys/types.h>
 #include <vector>
 
-#define GAME_TITLE "Conor's Crisp Cucumber"
+#define GAME_TITLE "Conor's Crispy Cucumber"
 #define DEFAULT_FRAMETIME (1000.0 / 60.0)
 #define LILITA TTF_OpenFont("./assets/ttf/lilita.ttf", 12)
 
 const SDL_Color WHITE = {255, 255, 255, 255};
 const SDL_Color BLACK = {0, 0, 0, 255};
+
+enum SoundID {
+    Cucumber1,
+};
 
 struct Display {
     SDL_Window *window;
@@ -76,7 +83,7 @@ struct Sprite {
         rect = SDL_Rect{x, y, w, h};
     }
 
-    void update_rect() {
+    virtual void update_rect() {
     }
 
     virtual void update() {
@@ -84,7 +91,7 @@ struct Sprite {
         SDL_RenderCopy(display.renderer, texture, NULL, &rect);
     }
 
-    void process_input(SDL_Event *event) {
+    virtual void process_input(SDL_Event *event) {
     }
 };
 
@@ -101,6 +108,7 @@ struct Game {
     unsigned int last_frame_time;
     unsigned int fps;
     float delta_time;
+    std::map<SoundID, Mix_Chunk *> sounds;
 
     std::vector<Sprite *> update_objects;
     std::vector<Platform *> platforms;
@@ -120,6 +128,7 @@ struct Game {
         case SDL_KEYUP:
             keys.erase(event.key.keysym.sym);
         }
+
         for (Sprite *object : this->update_objects) {
             object->process_input(&event);
         }
@@ -188,7 +197,10 @@ struct Player : Sprite {
         Sprite::update();
     }
 
-    void process_input(SDL_Event *event) {
+    void process_input(SDL_Event *event) override {
+        if (event->button.type == SDL_MOUSEBUTTONDOWN) {
+            printf("suc: %d\n", Mix_PlayChannel(-1, game.sounds[Cucumber1], 0));
+        }
     }
 };
 
@@ -228,7 +240,7 @@ struct Enemy : Sprite {
         Sprite::update();
     }
 
-    void process_input(SDL_Event *event) {
+    void process_input(SDL_Event *event) override {
     }
 };
 
